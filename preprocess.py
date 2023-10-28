@@ -29,16 +29,20 @@ def ReadAll(directory_path):
   df_merge = pd.merge(df_all, df2[['Symbol','Industry']], on='Symbol', how='inner')
   print(df_merge)
 
+  # Save to CSV
   df_merge.to_csv('opt_dataset.csv', index=False) 
 
 
-# Read Files
+# Extract data from a file
 def Preprocess(df, filename):
   # Select useful column
   selected_columns = ['Date', 'Close', 'VWAP', '%Deliverble']
   df = df[selected_columns]
   df['Date'] = pd.to_datetime(df['Date']) #Warning
   # df.loc[:, 'Date'] = pd.to_datetime(df.loc[:, 'Date'])
+
+  # Calculate Annual Return for ER and Risk
+  annual_return, year_count = Annual_Return(df)
 
   # 1. Stock Symbols
   symbol = filename.split('.')[0]
@@ -49,11 +53,11 @@ def Preprocess(df, filename):
   # print("Lastest Price: ", last_price)
 
   # 3. Expected Return
-  ER = Cal_ER(df)
+  ER = Cal_ER(annual_return)
   # print("Expected Return: ", ER)
   
   # 4. Risk
-  risk = Cal_Risk(df)
+  risk = Cal_Risk(annual_return)
   # print("Risk: ", risk)
   
   # 5. Liquidity  
@@ -64,7 +68,8 @@ def Preprocess(df, filename):
                              'Lastest Price': [last_price], 
                              'Expected Return': [ER], 
                              'Risk': [risk], 
-                             'Liquidity': [liquidity]})
+                             'Liquidity': [liquidity],
+                             'Year_Count': [year_count]})
 
   return df_summary
 
@@ -79,33 +84,36 @@ def Annual_VWAP(df):
       yearly_data[year] = df[df['Year'] == year].copy()
 
   list_vwap = []
+  year_count = {}
   for year, data in yearly_data.items():
-    column_means = data[['VWAP']].mean()
-    list_vwap.append(column_means)
+    if len(data) > 100: # have enough data in each year
+      year_count[year] = len(data)
+      column_means = data[['VWAP']].mean()
+      list_vwap.append(column_means)
 
-  return list_vwap
+  return list_vwap, year_count
 
 # Calculate annual return from annual vwap
 def Annual_Return(df):
-  annual_vwap = Annual_VWAP(df)
+  annual_vwap, year_count = Annual_VWAP(df)
   list_return = []
   for i in range(1, len(annual_vwap)-1):
     # (Current year - Last year)/Last year
     return_rate = (annual_vwap[i]-annual_vwap[i-1])/(annual_vwap[i-1])
     list_return.append(return_rate)
 
-  return list_return
+  return list_return, year_count
 
 # Calculate expected return from annual return
-def Cal_ER(df):
-  annual_return = Annual_Return(df)
+def Cal_ER(annual_return):
+  # annual_return = Annual_Return(df)
   annual_result = [x + 1 for x in annual_return]
   expected_return = gmean(annual_result)-1 # Calculate by geometric mean minus 1
   return expected_return[0]
 
 # Calculate risk from annual return
-def Cal_Risk(df):
-  annual_return = Annual_Return(df)
+def Cal_Risk(annual_return):
+  # annual_return = Annual_Return(df)
   risk = np.var(annual_return, ddof=1)  # ddof=1 specifies that it's a sample variance
   return risk
 
