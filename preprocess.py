@@ -86,7 +86,7 @@ def Annual_VWAP(df):
   list_vwap = []
   year_count = {}
   for year, data in yearly_data.items():
-    if len(data) > 100: # have enough data in each year
+    if len(data) > 200: # have enough data in each year
       year_count[year] = len(data)
       column_means = data[['VWAP']].mean()
       list_vwap.append(column_means)
