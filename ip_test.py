@@ -16,22 +16,14 @@ model = LpProblem(name="Portfolio_Optimization", sense=LpMaximize)
 # Define decision variables (binary variables for asset selection)
 assets = range(len(Symbol))
 x = LpVariable.dicts("Asset", assets, lowBound=0, upBound=None, cat='Integer')
-# y = LpVariable.dicts("y", assets, cat="Binary")  # Derived variable
-# y = {True if x[i] >= 1 else 0 for i in assets}
 
 # Define the objective function
 model += lpSum(ER[i] * x[i] * P[i] * 100 for i in assets), "Total_Return"
 
 # Define the constraints
 model += lpSum(x[i] * P[i] * 100 for i in assets) <= budget, "Budget_Constraint"
-
-model += lpSum(1 for i in assets if x[i]>=1) >= 3, 'Count_Asset_Constraint'
-
-# model += lpSum(1 for i in assets if x[i] is not None) >= 3, 'Count_Asset_Constraint'
-# model += sum(y[i] for i in assets) >= 2, 'Count_Asset_Constraint'
-# model += lpSum(1 if x[i]>=1 else 0 for i in assets) >= 3, 'Count_Asset_Constraint'
-# model += sum(y[i] >= (x[i] >= 1.0) for i in assets) >= 3, 'Count_Asset_Constraint'
-
+model += lpSum(x[i] * P[i] for i in assets) <= 0.7*budget, "Diversity1_Constraint"
+# model += x * P <= budget*0.7, "Diversity1_Constraint"
 
 # Solve the optimization problem
 model.solve()
