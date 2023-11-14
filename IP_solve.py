@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from pulp import LpProblem, LpMaximize, LpVariable, lpSum, value
+from pulp.apis import PULP_CBC_CMD
 
 
 # Select topN Liquidity from dataset
@@ -20,7 +21,7 @@ def df2lists(df):
   return Symbol, P, ER, R, L
 
 # Solving the problem with pulp
-def ipSolve(Symbol, P, ER, R, L, budget):
+def solver_single(Symbol, P, ER, R, L, budget):
   # Create the optimization problem
   model = LpProblem(name="Portfolio_Optimization", sense=LpMaximize)
 
@@ -38,7 +39,7 @@ def ipSolve(Symbol, P, ER, R, L, budget):
     model += (x[i] * P[i])/budget <= 0.7, f"Diversity_{i}_Constraint"
 
   # Solve the optimization problem
-  model.solve()
+  model.solve(PULP_CBC_CMD(msg=False))
 
   # Print the solution status
   # print("Status:", model.status)
@@ -48,11 +49,11 @@ def ipSolve(Symbol, P, ER, R, L, budget):
   #   print(f"{name}: {value(constraint)}")
 
   # Result: Symbol and Number of shares to invest
-  result_col = ['Symbol', 'Price', 'NumberShares', 'Liquidity']
+  result_col = ['Symbol', 'Price', 'NumberShares']
   result_df = pd.DataFrame(columns=result_col)
   for i in assets:
     if value(x[i]) > 0:
-      new_data = pd.DataFrame([[Symbol[i], P[i], value(x[i]), L[i]]], columns=result_col)
+      new_data = pd.DataFrame([[Symbol[i], P[i], value(x[i])]], columns=result_col)
       result_df = pd.concat([result_df, new_data], ignore_index=True)
 
   # Print the optimized total return
@@ -61,20 +62,42 @@ def ipSolve(Symbol, P, ER, R, L, budget):
   return result_df, optimized_return
 
 # Read and select top data
-def main(path, n, budget):
+def main_single(path, n, budget):
   df = data_top(path, n)
   Symbol, P, ER, R, L = df2lists(df)
-  result_df, optimized_return = ipSolve(Symbol, P, ER, R, L, budget)
+  result_df, optimized_return = solver_single(Symbol, P, ER, R, L, budget)
   total_invest = (result_df['Price'] * result_df['NumberShares']).sum()
-  print(result_df)
-  print('Total Investment: ', total_invest)
-  print("Optimized Total Return:", optimized_return)
 
+  return result_df, total_invest, optimized_return
 
 # Called main function
 # Finally, use Symbols27 file with eliminate liquid with less than 0.5.
 #   Largest problem is using 27 symbols
 #   Medium problem is using 20 symbols that selected symbols with top20 liquidity 
 #   Smallest problem is using 10 symbols that selected symbols with top10 liquidity 
-path = 'Symbols27_elimLiquid.csv'
-main(path, 27, 1000000)
+def main():
+  path = 'Symbols27.csv'
+
+  # Small problem
+  result_10, totalInvest_10, optReturn_10 = main_single(path, 10, 1000000)
+  print('\nSmall problem with 10 considered symbols')
+  print(result_10)
+  print('Total Investment: ', totalInvest_10)
+  print("Optimized Total Return:", optReturn_10)
+
+  # Medium problem
+  result_20, totalInvest_20, optReturn_20 = main_single(path, 20, 1000000)
+  print('\nMedium problem with 20 considered symbols')
+  print(result_20)
+  print('Total Investment: ', totalInvest_20)
+  print("Optimized Total Return:", optReturn_20)
+
+  # Large problem
+  result_27, totalInvest_27, optReturn_27 = main_single(path, 27, 1000000)
+  print('\nLarge problem with 27 considered symbols')
+  print(result_27)
+  print('Total Investment: ', totalInvest_27)
+  print("Optimized Total Return:", optReturn_27)
+
+
+main()
