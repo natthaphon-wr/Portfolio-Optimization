@@ -61,44 +61,14 @@ cov_matrix = np.random.rand(num_assets, num_assets)
 # Define the function to calculate portfolio returns and volatility
 def calculate_portfolio_performance(weights, mean_returns, cov_matrix):
     portfolio_return = np.sum(weights * mean_returns)
-    portfolio_stddev = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
-    return portfolio_return, portfolio_stddev
+    #portfolio_stddev = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+    return portfolio_return
 
 # Define the fitness function for the genetic algorithm
 def fitness_function(ga_instance, solution, solution_idx):
     weights = solution
-    portfolio_return, portfolio_stddev = calculate_portfolio_performance(weights, mean_returns, cov_matrix)
+    portfolio_return = calculate_portfolio_performance(weights, mean_returns, cov_matrix)
 
     # Maximize Sharpe ratio (return divided by risk)
-    return portfolio_return / portfolio_stddev
+    return portfolio_return
 
-# Create an instance of the pygad.GA class
-num_generations = 50
-num_parents_mating = 2
-sol_per_pop = 10
-num_genes = num_assets
-initial_population = np.random.rand(sol_per_pop, num_genes)
-
-ga_instance = pygad.GA(num_generations=num_generations,
-                       num_parents_mating=num_parents_mating,
-                       fitness_func=fitness_function,
-                       sol_per_pop=sol_per_pop,
-                       num_genes=num_genes,
-                       init_range_low=0.0,
-                       init_range_high=1.0)
-
-# Run the genetic algorithm
-ga_instance.run()
-
-# Get the best solution
-best_solution, best_solution_fitness = ga_instance.best_solution()
-best_weights = best_solution
-
-# Print the results
-print("Best Solution:", best_solution)
-print("Best Solution Fitness:", best_solution_fitness)
-
-# Calculate and print the final portfolio performance
-final_portfolio_return, final_portfolio_stddev = calculate_portfolio_performance(best_weights, mean_returns, cov_matrix)
-print("Final Portfolio Return:", final_portfolio_return)
-print("Final Portfolio Standard Deviation:", final_portfolio_stddev)
