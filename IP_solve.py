@@ -26,18 +26,18 @@ def solver_single(Symbol, P, ER, R, L, budget, multi=False, risk=0):
 
   # Define decision variables (integer variables for asset selection)
   assets = range(len(Symbol))
-  x = LpVariable.dicts("Asset", assets, lowBound=0, upBound=999, cat='Integer')
+  x = LpVariable.dicts("Asset", assets, lowBound=0, upBound=99, cat='Integer')
   y = LpVariable.dicts("Asset_select", assets, cat='Binary')
 
   # Define the objective function
-  model += lpSum(ER[i] * x[i] * P[i] for i in assets), "Total_Return"
+  model += lpSum(ER[i] * x[i] * P[i] *10 for i in assets), "Total_Return"
 
   # Define the constraints
-  model += lpSum(x[i] * P[i] for i in assets) <= budget, "Budget_Constraint"
+  model += lpSum(x[i] * P[i] *10 for i in assets) <= budget, "Budget_Constraint"
   if multi:
-    model += lpSum(x[i] * P[i] * R[i] for i in assets)/budget <= risk, "Risk_Constraint"
+    model += lpSum(x[i] * P[i] * R[i] *10 for i in assets)/budget <= risk, "Risk_Constraint"
   for i in assets:
-    model += (x[i] * P[i])/budget <= 0.7, f"Diversity_{i}_Constraint"
+    model += (x[i] * P[i] *10)/budget <= 0.7, f"Diversity_{i}_Constraint"
 
   # Solve the optimization problem
   model.solve(PULP_CBC_CMD(msg=False))
@@ -55,7 +55,7 @@ def solver_single(Symbol, P, ER, R, L, budget, multi=False, risk=0):
   result_df = pd.DataFrame(columns=result_col)
   for i in assets:
     if value(x[i]) > 0:
-      new_data = pd.DataFrame([[Symbol[i], P[i], value(x[i]), ER[i], R[i]]], columns=result_col)
+      new_data = pd.DataFrame([[Symbol[i], P[i], value(x[i]*10), ER[i], R[i]]], columns=result_col)
       result_df = pd.concat([result_df, new_data], ignore_index=True)
 
   # Print the optimized total return
