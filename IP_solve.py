@@ -64,10 +64,10 @@ def solver_single(Symbol, P, ER, R, L, budget, multi=False, risk=0):
   return result_df, optimized_return
 
 # Read and select top data
-def main_opt(path, n, budget):
+def main_opt(path, n, budget, multi):
   df = data_top(path, n)
   Symbol, P, ER, R, L = df2lists(df)
-  result_df, optimized_return = solver_single(Symbol, P, ER, R, L, budget, multi=True, risk=0.075)
+  result_df, optimized_return = solver_single(Symbol, P, ER, R, L, budget, multi=multi, risk=0.075)
   total_invest = (result_df['Price'] * result_df['NumberShares']).sum()
 
   return result_df, total_invest, optimized_return
@@ -81,14 +81,14 @@ def main():
   path = 'Symbols24.csv'
 
   # Small problem
-  result_12, totalInvest_12, optReturn_12 = main_opt(path, 12, 1000000)
+  result_12, totalInvest_12, optReturn_12 = main_opt(path, 12, 1000000, multi=False)
   print('\nSmall problem with 12 considered symbols')
   print(result_12)
   print('Total Investment: ', totalInvest_12)
   print("Optimized Total Return:", optReturn_12)
 
   # Large problem
-  result_24, totalInvest_24, optReturn_24 = main_opt(path, 24, 1000000)
+  result_24, totalInvest_24, optReturn_24 = main_opt(path, 24, 1000000, multi=False)
   print('\nLarge problem with 24 considered symbols')
   print(result_24)
   print('Total Investment: ', totalInvest_24)

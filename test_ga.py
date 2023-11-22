@@ -44,9 +44,9 @@ def fitness2(ga_instance, solution, solution_idx):
 # mutation_percent_genes = 10
 
 # PyGAD instance
-ga_instance = pygad.GA(num_generations = 500,
+ga_instance = pygad.GA(num_generations = 100,
                       sol_per_pop = 1000,
-                      num_parents_mating = 500,
+                      num_parents_mating = 50,
                       fitness_func = fitness2,
                       gene_type = int,
                       num_genes = len(P),
